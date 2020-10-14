@@ -13,13 +13,13 @@ import './screens/auth_screen.dart';
 import './providers/auth.dart';
 import './screens/splash_screen.dart';
 import './helpers/custom_route.dart';
-import 'dart:io';
+import './providers/photos.dart';
 import './screens/image_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-
-
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -39,7 +39,10 @@ class MyApp extends StatelessWidget {
             create: null,
             update: (ctx, auth, previousorder) => orders(auth.token,
                 auth.userId, previousorder == null ? [] : previousorder.order),
-          )
+          ),
+          ChangeNotifierProvider.value(
+            value: Photos(),
+          ),
         ],
         child: Consumer<Auth>(
           builder: (ctx, auth, _) => MaterialApp(
@@ -62,13 +65,19 @@ class MyApp extends StatelessWidget {
                             ? SplashScreen()
                             : AuthScreen(),
                   ),
+            //        StreamBuilder(stream: FirebaseAuth.instance.onAuthStateChanged,builder: (ctx,userSnapShot){
+            //   if(userSnapShot.hasData){
+            //   return product_overview();
+            //   }
+            //   return AuthScreen();
+            // }),
             routes: {
               product_detail.routename: (ctx) => product_detail(),
               cart_screen.routedname: (ctx) => cart_screen(),
               order_sceen.routedname: (ctx) => order_sceen(),
               user_productscreen.routedname: (ctx) => user_productscreen(),
-              Edit_ProductScreen.routedname: (ctx) => Edit_ProductScreen(), 
-              image_screen.routedname:(ctx)=>image_screen(),
+              Edit_ProductScreen.routedname: (ctx) => Edit_ProductScreen(),
+              image_screen.routedname: (ctx) => image_screen(),
             },
           ),
         ));

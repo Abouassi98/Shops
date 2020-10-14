@@ -9,6 +9,8 @@ import 'package:path_provider/path_provider.dart' as syspath;
 import '../screens/image_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../providers/photos.dart';
+import '../models/screenArguments.dart';
 
 class Edit_ProductScreen extends StatefulWidget {
   static const routedname = '/Edit_ProductScreen';
@@ -27,39 +29,14 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
   var gallery = ImageSource.gallery;
   String _imageUrl;
   File _imagefile;
-  //File _pickedImage;
-  // void _selectedImage(File pickedImage) {
-  // setState(() {
-  //     _pickedImage = pickedImage;
-  // });
-  // }
-  // Future _dowloadedPicture() async {
-  //   final _storageReference = _storge.ref().child('images/${DateTime.now()}');
-  //   String _downloadedAddress = await _storageReference.getDownloadURL();
-  //   setState(() {
-  //     _downloadUrl = _downloadedAddress;
-  //   });
-  // }
-  final FirebaseStorage _storge =
-      FirebaseStorage(storageBucket: 'gs://shops-fb193.appspot.com');
-  Future<String> _uplodedPicture() async {
-    String fileName = _imageUrl;
-    var _storageReference =
-        _storge.ref().child('$fileName at ${DateTime.now()}');
-    var _uploadedPhoto = _storageReference.putFile(_imagefile);
-    var completedTask = await _uploadedPhoto.onComplete;
-    dynamic _downlaodUrl = await completedTask.ref.getDownloadURL();
-    if (_downlaodUrl != null) {
-      setState(() {
-        _imageUrl = _downlaodUrl;
-        print('Value : $_imageUrl');
-      });
-      Fluttertoast.showToast(msg: 'Upload image Complete');
-    } else {
-      Fluttertoast.showToast(msg: 'Upload image faild');
-    }
-  }
+  String path;
+
   Future _stateofpicture(ImageSource chooseSource) async {
+    if (_editedProduct.image != null) {
+      setState(() {
+        _editedProduct.image = null;
+      });
+    }
     final _uploadedphoto =
         await ImagePicker().getImage(source: chooseSource, maxWidth: 600);
     if (_uploadedphoto == null) {
@@ -67,16 +44,15 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
     }
     setState(() {
       _imagefile = File(_uploadedphoto.path);
-      _imageUrl = _imagefile.hashCode.toString();
     });
-    await _uplodedPicture();
-    setState(() {
-      _editedProduct.image = _imageUrl;
-    });
-    // final appDir = await syspath.getApplicationDocumentsDirectory();
-    // final imagename = path.basename(_imagefile.path);
-    // await _imagefile.copy('${appDir.path}/$imagename');
+    if (_imageUrl != null) {
+      await Provider.of<Photos>(context, listen: false).deletePhoto(_imageUrl);
+    }
   }
+
+  // final appDir = await syspath.getApplicationDocumentsDirectory();
+  // final imagename = path.basename(_imagefile.path);
+  // await _imagefile.copy('${appDir.path}/$imagename');
   // await _dowloadedPicture();
   // setState(() {
   //    _pickedImage=savedImage;
@@ -124,11 +100,13 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
           'price': _editedProduct.price.toString(),
           'image': _editedProduct.image,
         };
-        //_imageUrl.text = _editedProduct.imageUrl;
-
+        setState(() {
+          _imageUrl = _editedProduct.image;
+          _imagefile = File(_imageUrl);
+        });
       }
     }
-    _isInit = false;
+      _isInit = false;
 
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
@@ -137,9 +115,9 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
   void dispose() {
     //   _imageUrlFoucsNode.removeListener(_updateImageUr);
     // _imageUrlFoucsNode.dispose();
+    // _imageUrl.dispose();
     _priceFoucsNode.dispose();
     _descriptionFoucsNode.dispose();
-    // _imageUrl.dispose();
     super.dispose();
   }
 
@@ -158,21 +136,50 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
 
   Future<void> _saveForm() async {
     final _isValid = _form.currentState.validate();
-    if (!_isValid || _imagefile == null) {
+    if (!_isValid) {
       return;
     }
     _form.currentState.save();
+    // _imageUrl = _imagefile.hashCode.toString();
     setState(() {
       _loadedSpinner = true;
     });
+
     if (_editedProduct.id != null) {
       setState(() {
         _loadedSpinner = false;
       });
-      await Provider.of<Products>(context, listen: false)
-          .updateProduct(_editedProduct.id, _editedProduct);
+      if (_editedProduct.image == _editedProduct.image) {
+        await Provider.of<Products>(context, listen: false)
+            .updateProduct(_editedProduct.id, _editedProduct);
+      } else {
+        await Provider.of<Photos>(context, listen: false)
+            .uplodedPicture( _imagefile)
+            .then((result) => result != null
+                ? setState(() {
+                    _imageUrl = result;
+                    Fluttertoast.showToast(msg: 'تم التعديل علي المنتج بنجاح');
+                  })
+                : Fluttertoast.showToast(msg: 'فشل التعديل علي المنتج'));
+        setState(() {
+          _editedProduct.image = _imageUrl;
+        });
+        await Provider.of<Products>(context, listen: false)
+            .updateProduct(_editedProduct.id, _editedProduct);
+      }
     } else {
       try {
+        await Provider.of<Photos>(context, listen: false)
+            .uplodedPicture( _imagefile)
+            .then((result) => result != null
+                ? setState(() {
+                    _imageUrl = result;
+                    Fluttertoast.showToast(msg: 'تم اضافة المنتج بنجاح');
+                  })
+                : Fluttertoast.showToast(msg: 'فشل اضافة المنتج'));
+        setState(() {
+          _editedProduct.image = _imageUrl;
+        });
         await Provider.of<Products>(context, listen: false)
             .addproduct(_editedProduct);
       } catch (error) {
@@ -225,8 +232,18 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
         ],
       ),
       body: _loadedSpinner
-          ? Center(
-              child: CircularProgressIndicator(),
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Center(
+                  child: CircularProgressIndicator(),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Text('Loading...'),
+              ],
             )
           : Padding(
               padding: const EdgeInsets.all(15.0),
@@ -254,7 +271,7 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
                           id: _editedProduct.id,
                           isFavourite: _editedProduct.isFavourite,
                           description: _editedProduct.description,
-                          image: _imageUrl,
+                          image: _editedProduct.image,
                         );
                       },
                     ),
@@ -287,7 +304,7 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
                           id: _editedProduct.id,
                           isFavourite: _editedProduct.isFavourite,
                           description: _editedProduct.description,
-                          image: _imageUrl,
+                          image: _editedProduct.image,
                         );
                       },
                     ),
@@ -313,7 +330,7 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
                           id: _editedProduct.id,
                           isFavourite: _editedProduct.isFavourite,
                           description: value,
-                          image: _imageUrl,
+                          image: _editedProduct.image,
                         );
                       },
                     ),
@@ -378,11 +395,12 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
                       children: <Widget>[
                         GestureDetector(
                           onTap: () {
-                            _imageUrl == null
-                                ? () {}
+                            _imagefile == null && _imageUrl == null
+                                ? Container()
                                 : Navigator.of(context).pushNamed(
                                     image_screen.routedname,
-                                    arguments: _imageUrl);
+                                    arguments:
+                                        ScreenArguments(_imageUrl, _imagefile));
                           },
                           child: Container(
                             alignment: Alignment.center,
@@ -395,9 +413,9 @@ class _Edit_ProductScreenState extends State<Edit_ProductScreen> {
                             child: _editedProduct.image != null
                                 ? Image.network(_imageUrl,
                                     width: double.infinity, fit: BoxFit.cover)
-                                : _imageUrl == null
+                                : _imagefile == null
                                     ? Text('Enter a photo')
-                                    : Image.network(_imageUrl,
+                                    : Image.file(_imagefile,
                                         width: double.infinity,
                                         fit: BoxFit.cover),
                           ),

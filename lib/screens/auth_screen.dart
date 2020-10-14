@@ -57,7 +57,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         color: Colors.deepOrange.shade900,
                         boxShadow: [
                           BoxShadow(
-                            blurRadius:8,
+                            blurRadius: 8,
                             color: Colors.black26,
                             offset: Offset(0, 20),
                           )
@@ -89,8 +89,6 @@ class _AuthScreenState extends State<AuthScreen> {
 }
 
 class AuthCard extends StatefulWidget {
-
-
   @override
   _AuthCardState createState() => _AuthCardState();
 }
@@ -221,7 +219,7 @@ class _AuthCardState extends State<AuthCard>
       ),
       elevation: 8.0,
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 500 ),
+        duration: Duration(milliseconds: 500),
         curve: Curves.easeIn,
         height: _authMode == AuthMode.Signup ? 320 : 260,
         //height: _hightAnimation.value.height,
@@ -241,7 +239,9 @@ class _AuthCardState extends State<AuthCard>
                   decoration: InputDecoration(labelText: 'E-Mail'),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value.isEmpty || !value.contains('@')||!value.endsWith('.com')) {
+                    if (value.isEmpty ||
+                        !value.contains('@') ||
+                        !value.endsWith('.com')) {
                       return 'Invalid email!';
                     }
                   },

@@ -26,7 +26,7 @@ class _product_overviewState extends State<product_overview> {
       setState(() {
         _spinner = true;
       });
-      Provider.of<Products>(context).FetchandSetProducts().then((_) {
+      Provider.of<Products>(context).fetchandSetProducts().then((_) {
         setState(() {
           _spinner = false;
         });
@@ -37,7 +37,7 @@ class _product_overviewState extends State<product_overview> {
   }
 
   Future<void> _refresh(BuildContext ctx) async {
-    await Provider.of<Products>(ctx).FetchandSetProducts();
+    await Provider.of<Products>(ctx).fetchandSetProducts();
   }
 
   var showFavourite = false;
@@ -86,35 +86,38 @@ class _product_overviewState extends State<product_overview> {
       ),
       drawer: app_drawer(),
       body: FutureBuilder(
-        future: _refresh(context),
-        builder: (context, AsyncSnapshot<dynamic> snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.none:
-              return Center(
-                child: Text('Error, no connection state'),
-              );
-              break;
-            case ConnectionState.waiting:
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [CircularProgressIndicator(),SizedBox(height: 6,) ,Text('Loading....')],
-                ),
-              );
-              break;
-            case ConnectionState.done:
-              return RefreshIndicator(
-                  child: ProductsGrid(showFavourite),
-                  onRefresh: () => _refresh(context));
-              break;
-            default:
-              return Center(
-                child: Text('Error, no connection state'),
-              );
-          }
-        },
-      ),
+          future: _refresh(context),
+          builder: (context, AsyncSnapshot<dynamic> snapshot) {
+            return RefreshIndicator(
+                child: ProductsGrid(showFavourite),
+                onRefresh: () => _refresh(context));
+          }),
     );
   }
 }
+//  builder: (context, AsyncSnapshot<dynamic> snapshot) {
+//         switch (snapshot.connectionState) {
+//           case ConnectionState.none:
+//             return Center(
+//               child: Text('Error, no connection state'),
+//             );
+//             break;
+//           case ConnectionState.waiting:
+//             return Center(
+//               child: Column(
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 crossAxisAlignment: CrossAxisAlignment.center,
+//                 children: [CircularProgressIndicator(),SizedBox(height: 6,) ,Text('Loading....')],
+//               ),
+//             );
+//             break;
+//           case ConnectionState.done:
+//             return RefreshIndicator(
+//                 child: ProductsGrid(showFavourite),
+//                 onRefresh: () => _refresh(context));
+//             break;
+//           default:
+//             return Center(
+//               child: Text('Error, no connection state'),
+//             );
+//         }

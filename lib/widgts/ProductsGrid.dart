@@ -19,7 +19,7 @@ class ProductsGrid extends StatelessWidget {
           mainAxisSpacing: 10),
       itemBuilder: (context, i) => ChangeNotifierProvider.value(
         value: products[i],
-        child: product_iteam(),
+        child:productData.iteams.length<=0?Text('No Iteams has been added') :product_iteam(),
       ),
       itemCount: products.length,
     );

@@ -4,7 +4,7 @@ import 'dart:convert';
 import '../models/http_exceptions.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 class Auth with ChangeNotifier {
   String _token;
   DateTime _expireyDate;
@@ -103,6 +103,7 @@ class Auth with ChangeNotifier {
       _authTimer.cancel();
       _authTimer = null;
     }
+    FirebaseAuth.instance.signOut();
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     prefs.clear();

@@ -64,7 +64,7 @@ class Products with ChangeNotifier {
     return _iteams.firstWhere((prod) => prod.id == id);
   }
 
-  Future<void> FetchandSetProducts([bool filterByuser=false]) async {
+  Future<void> fetchandSetProducts([bool filterByuser=false]) async {
     final filterString=filterByuser?'orderBy="creatorId"&equalTo="$userId"':'';
     var url =
         'https://shops-fb193.firebaseio.com/products.json?auth=$idToken&$filterString ';
